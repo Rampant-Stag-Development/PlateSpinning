@@ -4,6 +4,7 @@
 #include <EGL/egl.h>
 #include <memory>
 
+#include "Coin.h"
 #include "Model.h"
 #include "Shader.h"
 

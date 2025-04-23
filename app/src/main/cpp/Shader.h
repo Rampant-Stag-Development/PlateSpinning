@@ -63,6 +63,11 @@ public:
      */
     void setProjectionMatrix(float *projectionMatrix) const;
 
+    /*!
+     *
+     */
+    void tick() const;
+
 private:
     /*!
      * Helper function to load a shader of a given type
@@ -83,16 +88,19 @@ private:
             GLuint program,
             GLint position,
             GLint uv,
-            GLint projectionMatrix)
+            GLint projectionMatrix,
+            GLint uTime)
             : program_(program),
               position_(position),
               uv_(uv),
-              projectionMatrix_(projectionMatrix) {}
+              projectionMatrix_(projectionMatrix),
+              uTime_(uTime) {}
 
     GLuint program_;
     GLint position_;
     GLint uv_;
     GLint projectionMatrix_;
+    GLint uTime_;
 };
 
 #endif //ANDROIDGLINVESTIGATIONS_SHADER_H

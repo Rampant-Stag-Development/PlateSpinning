@@ -44,10 +44,14 @@ in vec2 inUV;
 out vec2 fragUV;
 
 uniform mat4 uProjection;
+uniform float uTime;
+
+#define PI 3.14159265359
 
 void main() {
     fragUV = inUV;
-    gl_Position = uProjection * vec4(inPosition, 1.0);
+    float rot = cos(uTime);
+    gl_Position = uProjection * vec4(inPosition.x * rot, inPosition.yz, 1.0);
 }
 )vertex";
 
@@ -58,11 +62,14 @@ precision mediump float;
 in vec2 fragUV;
 
 uniform sampler2D uTexture;
+uniform float uTime;
 
 out vec4 outColor;
 
 void main() {
-    outColor = texture(uTexture, fragUV);
+    vec2 polar = vec2(0.5) - fragUV;
+    float coinMask = 1. - step(0.5, length(polar));
+    outColor = coinMask * texture(uTexture, fragUV); // vec4(0.0, fragUV, 1.0); //
 }
 )fragment";
 
@@ -79,7 +86,7 @@ static constexpr float kProjectionHalfHeight = 2.f;
 static constexpr float kProjectionNearPlane = -1.f;
 
 /*!
- * The far plane distance for the projection matrix. Since this is an orthographic porjection
+ * The far plane distance for the projection matrix. Since this is an orthographic projection
  * matrix, it's convenient to have the far plane equidistant from 0 as the near plane.
  */
 static constexpr float kProjectionFarPlane = 1.f;
@@ -137,6 +144,7 @@ void Renderer::render() {
     // order provided. But the sample EGL setup requests a 24 bit depth buffer so you could
     // configure it at the end of initRenderer
     if (!models_.empty()) {
+        shader_->tick();
         for (const auto &model: models_) {
             shader_->drawModel(model);
         }
@@ -262,20 +270,36 @@ void Renderer::updateRenderArea() {
 void Renderer::createModels() {
     /*
      * This is a square:
-     * 0 --- 1
-     * | \   |
-     * |  \  |
-     * |   \ |
-     * 3 --- 2
+     * 0 --- 1 --- 2
+     * | \   |   / |
+     * |  \  |  /  |
+     * |   \ | /   |
+     * 3 --- 4 --- 5
+     * |   / | \   |
+     * |  /  |  \  |
+     * | /   |   \ |
+     * 6 --- 7 --- 8
      */
-    std::vector<Vertex> vertices = {
-            Vertex(Vector3{1, 1, 0}, Vector2{0, 0}), // 0
-            Vertex(Vector3{-1, 1, 0}, Vector2{1, 0}), // 1
-            Vertex(Vector3{-1, -1, 0}, Vector2{1, 1}), // 2
-            Vertex(Vector3{1, -1, 0}, Vector2{0, 1}) // 3
+    std::vector<Vertex> vertices = { // inPosition.x * sin(inPosition.y * PI / 2); inPosition.x * sin(inUV.y * PI)
+            Vertex(Vector3{1, 1, 0}, Vector2{1, 0}), // 0
+            Vertex(Vector3{0, 1, 0}, Vector2{0.5, 0}), // 1
+            Vertex(Vector3{-1, 1, 0}, Vector2{0, 0}), // 2
+            Vertex(Vector3{1, 0, 0}, Vector2{1, 0.5}), // 3
+            Vertex(Vector3{0, 0, 0}, Vector2{0.5, 0.5}), // 4
+            Vertex(Vector3{-1, 0, 0}, Vector2{0, 0.5}), // 5
+            Vertex(Vector3{1, -1, 0}, Vector2{1, 1}), // 6
+            Vertex(Vector3{0, -1, 0}, Vector2{0.5, 1}), // 7
+            Vertex(Vector3{-1, -1, 0}, Vector2{0, 1}) // 8
     };
     std::vector<Index> indices = {
-            0, 1, 2, 0, 2, 3
+            0, 1, 4,
+            0, 4, 3,
+            1, 2, 4,
+            2, 5, 4,
+            3, 4, 6,
+            4, 7, 6,
+            4, 5, 8,
+            4, 8, 7,
     };
 
     // loads an image and assigns it to the square.

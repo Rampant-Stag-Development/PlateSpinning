@@ -78,7 +78,7 @@ void Coin::release(double x, double y) {
     auto speed_rpms = arc_rad / time_ms * damping;
     if (!isSpinning()) {
         point(x, y);
-        speed_rad_per_ms = fmax(fmin(MAX_SPEED_RPMS, speed_rpms);
+        speed_rad_per_ms = fmax(-MAX_SPEED_RPMS, fmin(MAX_SPEED_RPMS, speed_rpms));
     } else {
         speed_rad_per_ms = fmin(MAX_SPEED_RPMS, speed_rad_per_ms + speed_rpms * damping);
     }

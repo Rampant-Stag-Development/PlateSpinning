@@ -1,3 +1,6 @@
+#include <ctime>
+#include <string>
+
 #include "Shader.h"
 
 #include "AndroidOut.h"
@@ -49,9 +52,11 @@ Shader *Shader::loadShader(
             // indices with layout= in your shader, but it is not done in this sample
             GLint positionAttribute = glGetAttribLocation(program, positionAttributeName.c_str());
             GLint uvAttribute = glGetAttribLocation(program, uvAttributeName.c_str());
+
             GLint projectionMatrixUniform = glGetUniformLocation(
                     program,
                     projectionMatrixUniformName.c_str());
+            GLint uTime = glGetUniformLocation(program, "uTime");
 
             // Only create a new shader if all the attributes are found.
             if (positionAttribute != -1
@@ -62,8 +67,10 @@ Shader *Shader::loadShader(
                         program,
                         positionAttribute,
                         uvAttribute,
-                        projectionMatrixUniform);
+                        projectionMatrixUniform,
+                        uTime);
             } else {
+                aout << "Failed to find all shader attributes" << std::endl;
                 glDeleteProgram(program);
             }
         }
@@ -151,4 +158,11 @@ void Shader::drawModel(const Model &model) const {
 
 void Shader::setProjectionMatrix(float *projectionMatrix) const {
     glUniformMatrix4fv(projectionMatrix_, 1, false, projectionMatrix);
+}
+
+void Shader::tick() const {
+    static float time = 0.0f;
+    time += 0.05f;
+    // aout << "Time: " << std::to_string(time) << std::endl;
+    glUniform1f(uTime_, static_cast<float>(time));
 }
